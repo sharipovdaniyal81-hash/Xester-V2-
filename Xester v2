@@ -1,9 +1,4 @@
 --Unchained and unbound, dark desires awoken, dark doctrines.
-game:GetService("StarterGui"):SetCore("SendNotification", { 
-	Title = "ban_notification";
-	Text = "This script is converted by ban_thid";
-	Icon = "rbxthumb://type=Asset&id=71967665601624&w=150&h=150"})
-Duration = 15;
 
 if not isfile("idk.mp3") then
 	writefile("idk.mp3", game:HttpGet("https://github.com/ian49972/smth/raw/refs/heads/main/idk.mp3"))
@@ -31,9 +26,11 @@ Player.CharacterAdded:Connect(function(newChar)
 			local clone = acc:Clone()
 			if clone:IsA("Accessory") or clone:IsA("Hat") then
 				local head = newChar:FindFirstChild("Head")
-				if head then clone.Parent = head end
+				if head and not head:FindFirstChild(clone.Name) then clone.Parent = head end
 			elseif clone:IsA("Shirt") or clone:IsA("Pants") or clone:IsA("CharacterMesh") then
-				clone.Parent = newChar
+				if not newChar:FindFirstChildOfClass(clone.ClassName) then
+					clone.Parent = newChar
+				end
 			end
 		end
 	end)
@@ -220,9 +217,42 @@ local cards = script.cards
 local wosh = script.Effects.woosh
 local dox = false
 local previd = nil
+local st = nil
+local hdweld2 = nil
+local zactive = false
 pcall(function()
 script.intro.Parent = game:GetService("ServerStorage")
 end)
+
+-- === ФИКС: swait и SOUND объявлены заранее, чтобы godmode не умирал с ошибкой ===
+function swait(num)
+	if num == 0 or num == nil then
+		game:service("RunService").Stepped:wait(0)
+	else
+		for i = 0, num do
+			game:service("RunService").Stepped:wait(0)
+		end
+	end
+end
+
+function SOUND(PARENT,ID,VOL,LOOP,PITCH,REMOVE)
+	local so = Instance.new("Sound")
+	so.Parent = PARENT
+	so.SoundId = "rbxassetid://"..ID
+	so.Volume = VOL
+	so.Looped = LOOP
+	so.Pitch = PITCH
+	so:Play()
+	removeuseless:AddItem(so,REMOVE)
+end
+
+function meshify(parent,scale,mid,tid)
+	local mesh = Instance.new("SpecialMesh",parent)
+	mesh.Name = "mesh"
+	mesh.Scale = scale
+	mesh.MeshId = "rbxassetid://"..mid
+	mesh.TextureId = "rbxassetid://"..tid
+end
 
 Root.Size = Vector3.new(2.623, 2.623, 1.311)
 LeftArm.Size = Vector3.new(1.311, 2.623, 1.311)
@@ -297,10 +327,8 @@ weld2()
 local axe = script.pickaxe:Clone() axe.Parent = Torso
 local skully2 = script.skullscript:Clone()
 
-for i,v in pairs(Character:GetDescendants()) do
-if v:IsA("Shirt") then v:Destroy() end end
-for i,v in pairs(Character:GetDescendants()) do
-if v:IsA("Pants") then v:Destroy() end end
+-- === ФИКС: аксессуары и одежда НЕ удаляются ===
+
 screenGui = Instance.new("ScreenGui")
 screenGui.Parent = script.Parent
 
@@ -870,7 +898,6 @@ hum.JumpPower = 80
 end
 end)()
 
--- === GODMODE: строка wait() ВОЗВРАЩЕНА (это критично!) ===
 godmode = coroutine.wrap(function()
 for i,v in pairs(Character:GetChildren()) do
 if v:IsA("BasePart") and v ~= Root then
@@ -878,9 +905,8 @@ v.Anchored = false
 end
 end
 while true do
-hum.MaxHealth = math.huge
-wait(0.0000001)
-hum.Health = math.huge
+hum.MaxHealth = 1e9
+hum.Health = 1e9
 swait()
 end
 end)
@@ -918,34 +944,6 @@ end
 	return Returning		
 end
 
-function swait(num)
-	if num == 0 or num == nil then
-		game:service("RunService").Stepped:wait(0)
-	else
-		for i = 0, num do
-			game:service("RunService").Stepped:wait(0)
-		end
-	end
-end
-
-function SOUND(PARENT,ID,VOL,LOOP,PITCH,REMOVE)
-local so = Instance.new("Sound")
-so.Parent = PARENT
-so.SoundId = "rbxassetid://"..ID
-so.Volume = VOL
-so.Looped = LOOP
-so.Pitch = PITCH
-so:Play()
-removeuseless:AddItem(so,REMOVE)
-end
-
-function meshify(parent,scale,mid,tid)
-local mesh = Instance.new("SpecialMesh",parent)
-mesh.Name = "mesh"
-mesh.Scale = scale
-mesh.MeshId = "rbxassetid://"..mid
-mesh.TextureId = "rbxassetid://"..tid
-end
 function blocktrail(position,size,trans,mat,color)
 local trailblock = Instance.new("Part",Torso)
 trailblock.Anchored = true
@@ -985,7 +983,7 @@ end)()
 coroutine.wrap(function()
 for i = 1, intensity/20 do
 local ray = Ray.new(parent.Position, Vector3.new(0,-25,0))
-local part, hitPosition = workspace:FindPartOnRayWithIgnoreList(ray, {bloodfolder,parent.Parent,bloc,Character,blooddecal,blowd,Torso},false,true)
+local part, hitPosition = workspace:FindPartOnRayWithIgnoreList(ray, {bloodfolder,parent.Parent,Character,Torso},false,true)
 if part and part.Parent ~= parent.Parent and not part.Parent:FindFirstChildOfClass("Humanoid") then
 local vbn = math.random(5,15)
 coroutine.wrap(function()
@@ -1508,7 +1506,7 @@ local keyFunction = function(Press)
 	local colo = nil
 	local ray = Ray.new(Root.Position,Vector3.new(0,-25,0))
 	local tabd = {bloodfolder,Character}
-	local part, hitPosition = workspace:FindPartOnRayWithIgnoreList(ray, {bloodfolder,Root,Character,blooddecal,blowd,Torso},false,true)
+	local part, hitPosition = workspace:FindPartOnRayWithIgnoreList(ray, {bloodfolder,Root,Character,Torso},false,true)
 	if part then
 		didhit = true
 	mate = part.Material
@@ -1913,13 +1911,15 @@ local keyFunction = function(Press)
 				ws = 100
 			end
 	elseif Press=='f' then
-		if debounce  then return end
-		if secondform then return end
+		if debounce then return end
+		-- === ФИКС: F теперь переключает форму в обе стороны ===
+		if not secondform then
+		debounce = true
 		ballshockwave(Torso.CFrame,.05,BrickColor.new("White"),"Neon",.05,Vector3.new(2,2,2))
 		spikeball(Torso.CFrame,Vector3.new(1.5,1.5,1.5),BrickColor.White(),.05,"Neon")
 		realhead.Parent = nil
 		realhead2.Parent = Torso
-		local hdweld2 = weldBetween(fkhead2,Head)
+		hdweld2 = weldBetween(fkhead2,Head)
 		shirt.ShirtTemplate = "rbxassetid://238537827"
 		pants.PantsTemplate = "rbxassetid://486031443"
 		st = staff:Clone() st.Parent = Torso 
@@ -1982,8 +1982,46 @@ local keyFunction = function(Press)
 	removeuseless:AddItem(tauntsound,15)
 	end
 	end)()
+	debounce = false
+		else
+		-- === Возврат к стандартной форме ===
+		debounce = true
+		attacking = false
+		secondform = false
+		ballshockwave(Torso.CFrame,.05,BrickColor.new("White"),"Neon",.05,Vector3.new(2,2,2))
+		spikeball(Torso.CFrame,Vector3.new(1.5,1.5,1.5),BrickColor.White(),.05,"Neon")
+		if hdweld2 then pcall(function() hdweld2:Destroy() end) hdweld2 = nil end
+		realhead2.Parent = nil
+		realhead.Parent = Torso
+		if st then pcall(function() st:Destroy() end) st = nil end
+		STAFFLERP.Part0 = nil
+		STAFFLERP.Part1 = nil
+		shirt.ShirtTemplate = "rbxassetid://215295188"
+		pants.PantsTemplate = "rbxassetid://215295280"
+		dmt2 = {1843358057,4558398377}
+		pcall(function()
+			doomtheme.Name = "removing"
+			doomtheme:Destroy()
+			doomtheme = Instance.new("Sound", Torso)
+			doomtheme.Volume = 4
+			doomtheme.Name = "doomtheme"
+			doomtheme.Looped = false
+			dmt2random = dmt2[math.random(1,#dmt2)]
+			previd = dmt2random
+			doomtheme.SoundId = "rbxassetid://"..dmt2random
+			doomtheme:Play()
+		end)
+		debounce = false
+		end
 	elseif Press=='z' then
-		if debounce then return end
+		-- === ФИКС: Z теперь переключаемая (повторное нажатие останавливает) ===
+		if secondform then return end
+		if zactive then
+			zactive = false
+			return
+		end
+		if debounce  then return end
+		zactive = true
 		debounce = true
 		attacking = true
 		ws = 120
@@ -2008,7 +2046,7 @@ local keyFunction = function(Press)
 	local b2 = Instance.new("TextLabel",b1)
 	b2.BackgroundTransparency = 1
 	coroutine.wrap(function()
-	while wait(.15) do
+	while zactive and wait(.15) do
 		light.Color = BrickColor.Random().Color
 	b2.Text = "DIGGY DIGGY HOLE!!!"
 	b2.TextColor3 = BrickColor.Random().Color
@@ -2020,8 +2058,10 @@ local keyFunction = function(Press)
 	b2.TextColor3 = BrickColor.new("Lime green").Color
 	b2.TextStrokeColor3 = Color3.new(0,0,0)
 	b2.Size = UDim2.new(1,0,0.5,0)
-		while wait() do
+		coroutine.wrap(function()
+		while zactive and wait() do
 			for i = 1, 9 do
+				if not zactive then break end
 				HEADLERP.C0 = HEADLERP.C0:lerp(CFrame.new(-0.2,-2,0)*CFrame.Angles(math.rad(-8.9),math.rad(-41),math.rad(-8.2))*CFrame.Angles(math.rad(0),math.rad(0),math.rad(0)),.4)
 				LEFTARMLERP.C0 = LEFTARMLERP.C0:lerp(CFrame.new(1.6,1.6,-0.2)*CFrame.Angles(math.rad(-49),math.rad(-15.7),math.rad(35.8))*CFrame.Angles(math.rad(0),math.rad(0),math.rad(0)),.4)
 				LEFTLEGLERP.C0 = LEFTLEGLERP.C0:lerp(CFrame.new(0.5,2.6,0.1)*CFrame.Angles(math.rad(-38.5),math.rad(-40.6),math.rad(-1.6))*CFrame.Angles(math.rad(0),math.rad(0),math.rad(0)),.4)
@@ -2032,6 +2072,7 @@ local keyFunction = function(Press)
 				swait()
 			end
 					for i = 1, 9 do
+						if not zactive then break end
 						AXELERP.C0 = AXELERP.C0:lerp(CFrame.new(2.5,0.5,-1.3)*CFrame.Angles(math.rad(-118.9),math.rad(-23.3),math.rad(-86))*CFrame.Angles(math.rad(0),math.rad(0),math.rad(0)),.4)
 						HEADLERP.C0 = HEADLERP.C0:lerp(CFrame.new(-0.2,-2,0)*CFrame.Angles(math.rad(-7.6),math.rad(-27.9),math.rad(-5.9))*CFrame.Angles(math.rad(0),math.rad(0),math.rad(0)),.4)
 						LEFTARMLERP.C0 = LEFTARMLERP.C0:lerp(CFrame.new(2,1.1,0.5)*CFrame.Angles(math.rad(26.5),math.rad(-15.7),math.rad(35.8))*CFrame.Angles(math.rad(0),math.rad(0),math.rad(0)),.4)
@@ -2042,6 +2083,20 @@ local keyFunction = function(Press)
 				swait()
 			end
 		end
+		-- восстановление после остановки танца
+		b1:Destroy()
+		light:Destroy()
+		doomtheme.Pitch = 1
+		doomtheme.Volume = 4
+		dmt2 = {1843358057,4558398377}
+		dmt2random = dmt2[math.random(1,#dmt2)]
+		previd = dmt2random
+		doomtheme.SoundId = "rbxassetid://"..dmt2random
+		doomtheme:Play()
+		ws = 0
+		attacking = false
+		debounce = false
+		end)()
 	elseif Press=='e' then
 		if debounce then return end
 		debounce = true
@@ -2090,7 +2145,7 @@ local keyFunction = function(Press)
 	local colo = nil
 	local ray = Ray.new(a.Position,Vector3.new(0,-25,0))
 	local tabd = {bloodfolder,Character}
-	local part, hitPosition = workspace:FindPartOnRayWithIgnoreList(ray, {bloodfolder,Root,Character,blooddecal,blowd,Torso},false,true)
+	local part, hitPosition = workspace:FindPartOnRayWithIgnoreList(ray, {bloodfolder,Root,Character,Torso},false,true)
 	if part then
 		didhit = true
 	mate = part.Material
@@ -2334,7 +2389,7 @@ local keyFunction = function(Press)
 	end
 end
 
-mouse.KeyDown:connect(keyFunction)
+-- === ФИКС: убран mouse.KeyDown:connect(keyFunction) — он дублировал вызовы ===
 UserInputService.InputBegan:connect(function(input, gpe)
 	if gpe then return end
 	if input.UserInputType == Enum.UserInputType.Keyboard then
@@ -2375,16 +2430,6 @@ local PARENT = STUFF[2]
 local MATERIAL = STUFF[3]
 local COLOR = STUFF[4]
 local TRANSPARENCY = STUFF[5]
-if levitate then
-if PART.ClassName == "Part" and PART ~= Root and PART.Name ~= eyo1 and PART.Name ~= eyo2 and PART.Name ~= "lmagic" and PART.Name ~= "rmagic" then
-PART.Material = MATERIAL
-PART.Color = COLOR
-PART.Transparency = TRANSPARENCY
-end
-PART.AncestryChanged:connect(function()
-pcall(function() PART.Parent = PARENT end)
-end)
-else
 if PART.ClassName == "Part" and PART ~= Root and PART.Name ~= "lmagic" and PART.Name ~= "rmagic" then
 PART.Material = MATERIAL
 PART.Color = COLOR
@@ -2393,7 +2438,6 @@ end
 PART.AncestryChanged:connect(function()
 pcall(function() PART.Parent = PARENT end)
 end)
-end
 end
 end
 
@@ -2411,11 +2455,8 @@ PART.Material = MATERIAL
 PART.Color = COLOR
 PART.Transparency = TRANSPARENCY
 end
-if PART.Parent ~= PARENT then
-hum:Remove()
+if PART.Parent ~= PARENT and PARENT and PARENT.Parent then
 PART.Parent = PARENT
-hum = Instance.new("Humanoid",Character)
-hum.Name = "noneofurbusiness"
 end
 end
 end
@@ -2471,7 +2512,9 @@ LeftArm.BrickColor = Head.BrickColor
 RightArm.BrickColor = Head.BrickColor
 LeftLeg.BrickColor = Head.BrickColor
 RightLeg.BrickColor = Head.BrickColor
-hum:SetStateEnabled("Dead",false) hum:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+pcall(function()
+	hum:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+end)
 if Torso:FindFirstChild("Neck") == nil then
 immortality()
 end
