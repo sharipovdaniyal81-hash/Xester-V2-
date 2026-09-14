@@ -870,7 +870,7 @@ hum.JumpPower = 80
 end
 end)()
 
--- ФИКС godmode: 1e9 вместо math.huge
+-- === GODMODE: строка wait() ВОЗВРАЩЕНА (это критично!) ===
 godmode = coroutine.wrap(function()
 for i,v in pairs(Character:GetChildren()) do
 if v:IsA("BasePart") and v ~= Root then
@@ -878,8 +878,9 @@ v.Anchored = false
 end
 end
 while true do
-hum.MaxHealth = 1e9
-hum.Health = 1e9
+hum.MaxHealth = math.huge
+wait(0.0000001)
+hum.Health = math.huge
 swait()
 end
 end)
@@ -2396,7 +2397,6 @@ end
 end
 end
 
--- ФИКС immortality: не пересоздаём Humanoid
 function immortality()
 for e = 1, #immortal do
 if immortal[e] ~= nil then
@@ -2411,8 +2411,11 @@ PART.Material = MATERIAL
 PART.Color = COLOR
 PART.Transparency = TRANSPARENCY
 end
-if PART.Parent ~= PARENT and PARENT and PARENT.Parent then
+if PART.Parent ~= PARENT then
+hum:Remove()
 PART.Parent = PARENT
+hum = Instance.new("Humanoid",Character)
+hum.Name = "noneofurbusiness"
 end
 end
 end
